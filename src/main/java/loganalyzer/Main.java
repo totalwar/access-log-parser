@@ -5,6 +5,7 @@ import loganalyzer.clf.SimdBasedParser;
 import loganalyzer.facade.LogAnalyzer;
 import org.apache.commons.cli.*;
 
+import java.io.BufferedOutputStream;
 import java.time.Duration;
 
 public class Main {
@@ -17,9 +18,9 @@ public class Main {
             System.exit(1);
         }
 
-        try {
+        try (BufferedOutputStream out = new BufferedOutputStream(System.out)){
             LogAnalyzer analyzer = new LogAnalyzer(new SimdBasedParser(), new MeanAvailabilityCalculationStrategy(cmdArgs));
-            analyzer.analyze(System.in, System.out);
+            analyzer.analyze(System.in, out);
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(2);
