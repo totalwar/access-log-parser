@@ -86,7 +86,7 @@ LoadTestBenchmark.testSimdBasedParser  avgt    3  678,537 ± 20,099  ms/op
 
 Внезапно в горячие методы всплывает `new String(byte[])` и `Reader.readLine()`.
 
-Оптимизации
+Оптимизации (планы)
 -----------
 
 - Переключиться со стриминга на memory mapped file.
