@@ -5,7 +5,7 @@ import loganalyzer.clf.SimdBasedParser;
 import loganalyzer.facade.LogAnalyzer;
 import org.apache.commons.cli.*;
 
-import java.io.BufferedOutputStream;
+import java.io.*;
 import java.time.Duration;
 
 public class Main {
@@ -18,13 +18,27 @@ public class Main {
             System.exit(1);
         }
 
-        try (BufferedOutputStream out = new BufferedOutputStream(System.out)){
+        try (InputStream in = getInput(cmdArgs); OutputStream out = getOutput(cmdArgs)) {
             LogAnalyzer analyzer = new LogAnalyzer(new SimdBasedParser(), new MeanAvailabilityCalculationStrategy(cmdArgs));
-            analyzer.analyze(System.in, out);
+            analyzer.analyze(in, out);
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(2);
         }
+    }
+
+    private static InputStream getInput(CommandLineArgs cmdArgs) throws IOException {
+        if (cmdArgs.getInputFile() != null) {
+            return new FileInputStream(cmdArgs.getInputFile());
+        }
+        return System.in;
+    }
+
+    private static OutputStream getOutput(CommandLineArgs cmdArgs) throws IOException {
+        if (cmdArgs.getOutputFile() != null) {
+            return new FileOutputStream(cmdArgs.getOutputFile());
+        }
+        return System.out;
     }
 
     private static CommandLineArgs parseCommandLineArgs(String[] args) {
@@ -49,6 +63,20 @@ public class Main {
                 .hasArg()
                 .required(false)
                 .desc("Размер скользящего окна в секундах (по умолчанию 60)")
+                .build());
+
+        options.addOption(Option.builder("i")
+                .longOpt("input")
+                .hasArg()
+                .required(false)
+                .desc("Файл для анализа")
+                .build());
+
+        options.addOption(Option.builder("o")
+                .longOpt("output")
+                .hasArg()
+                .required(false)
+                .desc("Файл с результатом")
                 .build());
 
         options.addOption(Option.builder("h")
@@ -81,7 +109,15 @@ public class Main {
 
             Duration timeWindow = Duration.ofSeconds(Integer.parseInt(cmd.getOptionValue("tw", "60")));
 
-            return new CommandLineArgs(availabilityThreshold, responseTimeThreshold, timeWindow);
+            String input = cmd.getOptionValue("i");
+            File inputFile = input == null ? null : new File(input);
+
+            String output = cmd.getOptionValue("o");
+            File outputFile = output == null ? null : new File(output);
+
+            return new CommandLineArgs(availabilityThreshold, responseTimeThreshold, timeWindow)
+                    .setInputFile(inputFile)
+                    .setOutputFile(outputFile);
 
         } catch (ParseException e) {
             System.err.println("Ошибка в аргументах команды: " + e.getMessage());
